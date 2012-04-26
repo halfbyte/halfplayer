@@ -12,6 +12,9 @@
 }
 
 
+a:link, a:visited {
+  color: #ff0;
+}
 
 body {
   color: #ccc;
@@ -40,6 +43,7 @@ h1 {
 
 }
 
+
 .mods a {
   color: #fff;
   text-decoration: none;
@@ -63,3 +67,9 @@ h1 {
   100% {background: #444;}
 }
 
+a.stop {
+  border: 1px solid #fff;
+  text-decoration: none;
+  color: #fff;
+  padding: 0.2em;
+}
