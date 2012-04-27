@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-  <title>Mozilla Dev Derby Mod Player</title>
+  <title>halfplayer</title>
   <script type="text/javascript" src="js/jquery.js"></script>
   <script type="text/javascript" src="js/underscore.js"></script>
   <script type="text/javascript" src="js/resampler.js"></script>
@@ -16,17 +16,36 @@
 </head>
 <body>
   <h1>halfplayer V1.0</h1>
-  <div class="playlist">
-    <ul class="mods">
-      <li><a class="mod" href="mods/cream_of_the_earth.mod">Cream Of The Earth (Romeo Knight/ TRSRI)</a></li>
-      <li><a class="mod" href="mods/in_the_kitchen.mod">In The Kitchen (4mat/Anarchy)</a></li>
-      <li><a class="mod" href="mods/how_to_skin_a_cat.mod">How To Skin A Cat (Melon Dezign)</a></li>
-      <li><a class="mod" href="mods/one_finger.mod">One Finger (The Fox II)</a></li>
-      <li><a class="mod" href="mods/kurkkukipu.mod">Kurkkukipu (vesuri/da jormas)</a></li>
-      <li><a class="mod" href="mods/chip-set-i.mod">Chip Set I (halfbyte/pandemon!um)</a></li>
-    </ul>
+  <div class="player">
+    <div class="playlist">
+      <ul class="mods">
+        <li><a class="mod" href="mods/cream_of_the_earth.mod">Cream Of The Earth (Romeo Knight/ TRSRI)</a></li>
+        <li><a class="mod" href="mods/in_the_kitchen.mod">In The Kitchen (4mat/Anarchy)</a></li>
+        <li><a class="mod" href="mods/how_to_skin_a_cat.mod">How To Skin A Cat (Melon Dezign)</a></li>
+        <li><a class="mod" href="mods/one_finger.mod">One Finger (The Fox II)</a></li>
+        <li><a class="mod" href="mods/kurkkukipu.mod">Kurkkukipu (vesuri/da jormas)</a></li>
+        <li><a class="mod" href="mods/chip-set-i.mod">Chip Set I (halfbyte/pandemon!um)</a></li>
+      </ul>
+    </div>
+    <div class="samplelist">
+      <ul class="samples">
+      </ul>
+    </div>
+    <div class="controls">
+      <a class="stop button" href="#stop">STOP</a>
+      <a class="play button" href="#play">PLAY</a>
+    </div>
   </div>
-  <p><a class="stop" href="#stop">STOP</a></p>
-  <footer>See also: <a href="http://cloudtracker.fm">cloudtracker.fm</a>. fork me on <a href="https://github.com/halfbyte/halfplayer/">github</a>.</footer>
+  <footer>
+    <p>See also: <a href="http://cloudtracker.fm">cloudtracker.fm</a>.</p>
+    <p>fork me on <a href="https://github.com/halfbyte/halfplayer/">github</a>.</p>
+    <h2>credits:</h2>
+    <p>player code converted from <a href="http://blog.kebby.org/?p=11">kb's TinyMOD</a> protracker player</p>
+    <p>uses <a href="https://github.com/grantgalitz/XAudioJS">xaudiojs</a> for crossbrowser playback</p>
+    <p>has <a href="http://jan.krutisch.de/">mad cow powers.</a></p>
+
+
+
+  </footer>
 </body>
 </html>

@@ -230,26 +230,25 @@
     Player.prototype.play = function() {
       this.playing = true;
       this.pattern_only = false;
-      this.cur_row = 0;
-      return console.log('PLAYING');
+      return this.cur_row = 0;
     };
 
     Player.prototype.play_pattern = function(pattern) {
       this.cur_pattern = pattern;
       this.pattern_only = true;
       this.playing = true;
-      this.cur_row = 0;
-      return console.log('PLAYING PATTERN', pattern);
+      return this.cur_row = 0;
     };
 
     Player.prototype.stop = function() {
-      var ch;
+      var ch, _results;
       this.playing = false;
+      _results = [];
       for (ch = 0; ch <= 3; ch++) {
         this.mixer.voices[ch].volume = 0;
-        this.channels[ch].volume = 0;
+        _results.push(this.channels[ch].volume = 0);
       }
-      return console.log('STOPPING');
+      return _results;
     };
 
     Player.prototype.xaudio_render = function(len) {

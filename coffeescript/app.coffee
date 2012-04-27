@@ -10,12 +10,23 @@ window.MP.constants.BASE_PTABLE = [
 
 $ ->
 
+  set_sample_names = (mod) ->
+    list = $('.samples')
+    list.html("");
+    _(mod.samples).each (sample) ->
+      list.append("<li>" + sample.name + "</li>")
+
+
   $('.stop').click (e) ->
-    MP.PlayerInstance.stop();
+    MP.PlayerInstance.stop()
+    e.preventDefault()
+
+  $('.play').click (e) ->
+    MP.PlayerInstance.play()
+    e.preventDefault()
 
   $('.mod').click (e) ->
     url = @href
-    console.log url
     $(".mod").removeClass('active');
     $(this).addClass('active');
 
@@ -25,24 +36,11 @@ $ ->
   
     oReq.onload = (oEvent) ->
       arrayBuffer = oReq.response
-      console.log(arrayBuffer)
       if arrayBuffer
-        console.log arrayBuffer.byteLength
         mod = new MP.Mod(arrayBuffer)
+        set_sample_names(mod)
         MP.PlayerInstance.set_module(mod);
         MP.PlayerInstance.play();
     oReq.send(null);  
 
-
-
-    # $.ajax 
-    #   url: url
-    #   error: (xhr, status, error) ->
-    #     console.log(xhr, status, error)
-
-    #   success: loadMod
-    #   xhrFields:
-    #     responseType: 'arraybuffer'
-
     e.preventDefault()
-    console.log "sent"

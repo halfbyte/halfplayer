@@ -18,29 +18,70 @@ a:link, a:visited {
 
 body {
   color: #ccc;
-  background: #000;
+  background: #444;
   font-family: "BitTrip7sRBRegular", sans-serif;
 }
 
 h1 {
+  font-size: 2em;
+  font-weight: normal;
+  margin:0;padding:0.2em;
+  line-height: 1.2em;
+  background: #000;
+}
+
+footer {
+  margin-top: 2em;
+  font-size: 0.75em;
+}
+
+h2 {
   font-size: 1em;
   font-weight: normal;
+  
+  color: #fff;
+}
+
+.player {
+  width: 100%;
+  overflow: hidden;
+  margin-top: 1em;
 }
 
 .playlist {
   overflow-y: scroll;
-  height: 5em;
+  height: 15em;
+  width:49.5%;
   padding: 0px;
-  border: 1px solid #fff;
+  float: left;
+  background: #000;
+}
+.samplelist {
+  overflow-y: scroll;
+  height: 15em;
+  width:49.5%;
+  padding: 0px;
+  float:left;
+  margin-left: 1%;
+  background: #000;
+}
+.controls {
+  width: 78em;
+  
+  float: left;
+  margin-top: 0.2em;
+  padding: 1em 0em;
 }
 
-.mods {
+.mods,.samples {
   list-style-type: none;
   height: 3em;
-  margin: 0;
+  margin: 2px;
   padding: 0;
   line-height: 1.2em;
-
+}
+.samples li {
+  padding: 0 4px;
 }
 
 
@@ -48,7 +89,7 @@ h1 {
   color: #fff;
   text-decoration: none;
   display: block;
-  padding: 0 1em;
+  padding: 0 4px;
 }
 
 .mods a.active {
@@ -67,9 +108,10 @@ h1 {
   100% {background: #444;}
 }
 
-a.stop {
+a.button {
   border: 1px solid #fff;
   text-decoration: none;
   color: #fff;
   padding: 0.2em;
+  margin: 0.1em;
 }

@@ -22,52 +22,6 @@ class window.MP.Mod
           note = i
     note
 
-  set_sample_hi: (p, r, c, n) ->
-    @patterns[p][r][c].sample = ((n & 1) << 4) | (@patterns[p][r][c].sample & 0xf)
-
-  set_sample_lo: (p, r, c, n) ->
-    @patterns[p][r][c].sample = (@patterns[p][r][c].sample & 0xf0) | (n & 0xf)
-
-  set_command: (p,r,c,n) ->
-    @patterns[p][r][c].command = (n & 0xF)
-
-  set_command_param_hi: (p, r, c, n) ->
-    @patterns[p][r][c].command_params = ((n & 0xF) << 4) | (@patterns[p][r][c].command_params & 0xf)
-
-  set_command_param_lo: (p, r, c, n) ->
-    @patterns[p][r][c].command_params = (@patterns[p][r][c].command_params & 0xf0) | (n & 0xf)
-
-  set_volume: (sample, volume) ->
-    if volume >= 0 && volume <= 64
-      @samples[sample].volume = volume
-
-  volume_up: (sample) ->
-    @set_volume(sample, @samples[sample].volume + 1)
-
-  volume_down: (sample) ->
-    @set_volume(sample, @samples[sample].volume - 1)
-
-  set_finetune: (sample, finetune) ->
-    if finetune >= -8 && finetune <= 7
-      @samples[sample].finetune = finetune
-    console.log(@samples[sample].finetune)
-
-  finetune_up: (sample) ->
-    @set_finetune(sample, @samples[sample].finetune + 1)
-
-  finetune_down: (sample) ->
-    @set_finetune(sample, @samples[sample].finetune - 1)
-
-  set_note: (pattern, row, channel, note, sample) ->
-    @patterns[pattern][row][channel].note = note
-    @patterns[pattern][row][channel].note_text = @note_from_text(note)
-    @patterns[pattern][row][channel].sample = sample + 1
-
-  delete_note: (pattern, row, channel) ->
-    @patterns[pattern][row][channel].note = 0
-    @patterns[pattern][row][channel].note_text = '---'
-    @patterns[pattern][row][channel].sample = 0
-
   constructor: (data, callback) ->
     if data.byteLength
       @from_array_buffer(data)
@@ -75,72 +29,6 @@ class window.MP.Mod
       @from_json(data)
 
     _.defer(callback) if typeof(callback) == 'function'
-
-
-  base64ToInt8: (input) ->
-    bs = atob(input)
-    out = new Int8Array(bs.length)
-    for i in [0...bs.length]
-      out[i] = bs.charCodeAt(i)
-    out
-
-  int8ToBase64: (input) ->
-    out = ""
-    for i in [0...input.length]
-      out += String.fromCharCode((input[i] + 256) % 256)
-    btoa(out)
-
-
-  add_pattern: ->
-    pattern = []
-    for rownum in [0..63]
-      row = []
-      for notenum in [0..3]
-        row[notenum] = {
-          note: 0
-          period: 0
-          note_text: '---'
-          command: 0
-          command_params: 0
-        }
-      pattern[rownum] = row
-    @patterns[@num_patterns] = pattern
-    @num_patterns++
-
-
-  from_json: (data) ->
-    console.log("loading json")
-    @name = data.name
-    @samples = data.samples
-    @patterns = data.patterns
-    @fix_patterns()
-    @pattern_table_length = data.pattern_table_length
-    @pattern_table = data.pattern_table
-    @num_patterns = data.patterns.length
-    callbacks = []
-    for sample,i in @samples
-      if sample.length > 0
-        sample.data = @base64ToInt8(data.sample_data[i])
-      else
-        sample.data = []
-
-
-
-  fix_patterns: ->
-    for pattern in @patterns
-      for row in pattern
-        for note in row
-          note.note = @find_note(note.period)
-          note.note_text = @note_from_text(note.note)
-
-
-  as_json: ->
-    name: @name
-    samples: ({name: sample.name, length: sample.length, repeat: sample.repeat, replen: sample.replen, finetune: sample.finetune, volume: sample.volume} for sample in @samples)
-    pattern_table_length: @pattern_table_length
-    pattern_table: @pattern_table
-    patterns: @patterns
-    sample_data: (@int8ToBase64(sample.data) for sample in @samples)
 
   from_array_buffer: (data) ->
     @samples = []

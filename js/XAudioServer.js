@@ -9,7 +9,6 @@
 	The callback is passed the number of samples requested, while it can return any number of samples it wants back.
 */
 function XAudioServer(channels, sampleRate, minBufferSize, maxBufferSize, underRunCallback, volume) {
-	console.log("constructin")
 	this.audioChannels = (channels == 2) ? 2 : 1;
 	webAudioMono = (this.audioChannels == 1);
 	XAudioJSSampleRate = (sampleRate > 0 && sampleRate <= 0xFFFFFF) ? sampleRate : 44100;
@@ -195,7 +194,6 @@ XAudioServer.prototype.preInitializeMozAudio = function () {
 	this.mozAudioFound = true;
 }
 XAudioServer.prototype.initializeMozAudio = function () {
-	console.log("initilaizing MozAudio")
 	//Fill in our own buffering up to the minimum specified:
 	this.writeMozAudio(getFloat32(webAudioMinBufferSize));
 	this.audioType = 0;
@@ -210,7 +208,6 @@ XAudioServer.prototype.initializeWebAudio = function () {
 	}
 }
 XAudioServer.prototype.initializeFlashAudio = function () {
-	console.log("trying flash audio");
 	var existingFlashload = document.getElementById("XAudioJS");
 	if (existingFlashload == null) {
 		var thisObj = this;

@@ -192,7 +192,7 @@ class window.MP.player.Player
     @playing = true
     @pattern_only = false
     @cur_row = 0
-    console.log 'PLAYING'
+    
 
   # play current patter
   play_pattern: (pattern)->
@@ -200,14 +200,12 @@ class window.MP.player.Player
     @pattern_only = true
     @playing = true
     @cur_row = 0
-    console.log 'PLAYING PATTERN', pattern
 
   stop: ->
     @playing = false
     for ch in [0..3]
       @mixer.voices[ch].volume = 0
       @channels[ch].volume = 0
-    console.log 'STOPPING'
 
   xaudio_render: (len) =>
       
