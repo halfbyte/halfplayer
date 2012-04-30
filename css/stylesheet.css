@@ -115,3 +115,37 @@ a.button {
   padding: 0.2em;
   margin: 0.1em;
 }
+
+a.button.play.active {
+  background: green;
+}
+a.button.stop.active {
+  background: red;
+}
+a.button.inactive {
+  color: gray;
+  border-color: gray;
+}
+
+@-moz-keyframes guru {
+  0%   {border-color: #000;}
+  50% {border-color: red;}
+  100%   {border-color: #000;}
+}
+@-webkit-keyframes guru {
+  0%   {border-color: #000;}
+  50% {border-color: red;}
+  100%   {border-color: #000;}
+}
+
+
+.notice .error {
+  background: #000;
+  border: 3px solid red;
+  color: red;
+  line-height: 1.2em;
+  padding: 20px;
+  -moz-animation: guru 1s infinite;
+  -webkit-animation: guru 1s infinite;
+
+}

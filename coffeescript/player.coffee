@@ -501,6 +501,9 @@ class window.MP.player.Player
       else
         @tick() if @playing
         @tr_counter = Math.floor(@tick_rate)
-    
-# give the app a single instance only
-window.MP.PlayerInstance = new window.MP.player.Player()
+try
+  window.MP.PlayerInstance = new window.MP.player.Player()  
+catch error
+  window.MP.PlayerInstance = null
+  window.MP.PlayerError = error
+

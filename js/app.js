@@ -9,6 +9,10 @@
 
   $(function() {
     var set_sample_names;
+    if (!MP.PlayerInstance) {
+      $('.notice').append("<div class='error'>This Browser does not support realtime audio output. Please use Firefox, Chrome or install Flash.</div>");
+      return null;
+    }
     set_sample_names = function(mod) {
       var list;
       list = $('.samples');
@@ -18,12 +22,22 @@
       });
     };
     $('.stop').click(function(e) {
-      MP.PlayerInstance.stop();
-      return e.preventDefault();
+      var me;
+      e.preventDefault();
+      me = $(this);
+      if (me.hasClass('inactive')) return;
+      $('.button.play').removeClass('active');
+      me.addClass('active');
+      return MP.PlayerInstance.stop();
     });
     $('.play').click(function(e) {
+      var me;
+      e.preventDefault();
+      me = $(this);
+      if (me.hasClass('inactive')) return;
       MP.PlayerInstance.play();
-      return e.preventDefault();
+      me.addClass('active');
+      return $('.button.stop').removeClass('active');
     });
     return $('.mod').click(function(e) {
       var oReq, url;
@@ -40,7 +54,9 @@
           mod = new MP.Mod(arrayBuffer);
           set_sample_names(mod);
           MP.PlayerInstance.set_module(mod);
-          return MP.PlayerInstance.play();
+          MP.PlayerInstance.play();
+          $('.button.stop,.button.play').removeClass('inactive');
+          return $('.button.play').addClass('active');
         }
       };
       oReq.send(null);

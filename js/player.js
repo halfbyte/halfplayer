@@ -630,6 +630,11 @@
 
   })();
 
-  window.MP.PlayerInstance = new window.MP.player.Player();
+  try {
+    window.MP.PlayerInstance = new window.MP.player.Player();
+  } catch (error) {
+    window.MP.PlayerInstance = null;
+    window.MP.PlayerError = error;
+  }
 
 }).call(this);

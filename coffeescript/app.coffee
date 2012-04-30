@@ -9,6 +9,9 @@ window.MP.constants.BASE_PTABLE = [
     107, 101,  95,  90,  85,  80,  76,  71,  67,  64,  60,  57]
 
 $ ->
+  unless MP.PlayerInstance
+    $('.notice').append("<div class='error'>This Browser does not support realtime audio output. Please use Firefox, Chrome or install Flash.</div>")
+    return null
 
   set_sample_names = (mod) ->
     list = $('.samples')
@@ -18,12 +21,23 @@ $ ->
 
 
   $('.stop').click (e) ->
-    MP.PlayerInstance.stop()
     e.preventDefault()
+    me = $(this)
+
+    return if me.hasClass('inactive')
+    $('.button.play').removeClass('active')
+    me.addClass('active')
+    MP.PlayerInstance.stop()
+    
 
   $('.play').click (e) ->
-    MP.PlayerInstance.play()
     e.preventDefault()
+    me = $(this)
+    return if me.hasClass('inactive')
+    MP.PlayerInstance.play()
+    me.addClass('active')
+    $('.button.stop').removeClass('active')
+    
 
   $('.mod').click (e) ->
     url = @href
@@ -39,8 +53,16 @@ $ ->
       if arrayBuffer
         mod = new MP.Mod(arrayBuffer)
         set_sample_names(mod)
-        MP.PlayerInstance.set_module(mod);
-        MP.PlayerInstance.play();
+        MP.PlayerInstance.set_module(mod)
+        MP.PlayerInstance.play()
+        $('.button.stop,.button.play').removeClass('inactive')
+        $('.button.play').addClass('active')
+
     oReq.send(null);  
 
     e.preventDefault()
+
+
+  # give the app a single instance only
+
+
