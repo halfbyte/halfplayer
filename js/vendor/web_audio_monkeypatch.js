@@ -13,39 +13,38 @@
    limitations under the License.
 */
 
-/* 
+/*
 
-This monkeypatch library is intended to be included in projects that use 
-webkitAudioContext (instead of AudioContext), and that may use the now-
-deprecated bits of the Web Audio API (e.g. using BufferSourceNode.noteOn()
-instead of BufferSourceNode.start().
+This monkeypatch library is intended to be included in projects that are
+written to the proper AudioContext spec (instead of webkitAudioContext),
+and that use the new naming and proper bits of the Web Audio API (e.g.
+using BufferSourceNode.start() instead of BufferSourceNode.noteOn()), but may
+have to run on systems that only support the deprecated bits.
 
-This library should be harmless to include if the browser does not have
-the unprefixed "AudioContext" implemented.  If unprefixed AudioContext is
-supported, but the deprecated method names are already implemented, this
-library will have created a few shim functions on create* methods, but 
-will not damage or override anything else.
-
-Ideally, the use of this library will go to zero - it is only intended as
-a way to quickly get script written to the old Web Audio methods to work
-in browsers that only support the new, approved methods.
+This library should be harmless to include if the browser supports
+unprefixed "AudioContext", and/or if it supports the new names.
 
 The patches this library handles:
+if window.AudioContext is unsupported, it will be aliased to webkitAudioContext().
+if AudioBufferSourceNode.start() is unimplemented, it will be routed to noteOn() or
+noteGrainOn(), depending on parameters.
 
-AudioBufferSourceNode.noteOn() is aliased to start()
-AudioBufferSourceNode.noteGrainOn() is aliased to start()
-AudioBufferSourceNode.noteOff() is aliased to stop()
-AudioContext.createGainNode() is aliased to createGain()
-AudioContext.createDelayNode() is aliased to createDelay()
-AudioContext.createJavaScriptNode() is aliased to createScriptProcessor()
-OscillatorNode.noteOn() is aliased to start()
-OscillatorNode.noteOff() is aliased to stop()
-AudioParam.setTargetValueAtTime() is aliased to setTargetAtTime()
-OscillatorNode's old enum values are aliased to the Web IDL enum values.
-BiquadFilterNode's old enum values are aliased to the Web IDL enum values.
-PannerNode's old enum values are aliased to the Web IDL enum values.
-AudioContext.createWaveTable() is aliased to createPeriodicWave().
-OscillatorNode.setWaveTable() is aliased to setPeriodicWave().
+The following aliases only take effect if the new names are not already in place:
+
+AudioBufferSourceNode.stop() is aliased to noteOff()
+AudioContext.createGain() is aliased to createGainNode()
+AudioContext.createDelay() is aliased to createDelayNode()
+AudioContext.createScriptProcessor() is aliased to createJavaScriptNode()
+AudioContext.createPeriodicWave() is aliased to createWaveTable()
+OscillatorNode.start() is aliased to noteOn()
+OscillatorNode.stop() is aliased to noteOff()
+OscillatorNode.setPeriodicWave() is aliased to setWaveTable()
+AudioParam.setTargetAtTime() is aliased to setTargetValueAtTime()
+
+This library does NOT patch the enumerated type changes, as it is
+recommended in the specification that implementations support both integer
+and string types for AudioPannerNode.panningModel, AudioPannerNode.distanceModel
+BiquadFilterNode.type and OscillatorNode.type.
 
 */
 (function (global, exports, perf) {
@@ -54,135 +53,91 @@ OscillatorNode.setWaveTable() is aliased to setPeriodicWave().
   function fixSetTarget(param) {
     if (!param)	// if NYI, just return
       return;
-    if (!param.setTargetValueAtTime)
-      param.setTargetValueAtTime = param.setTargetAtTime; 
+    if (!param.setTargetAtTime)
+      param.setTargetAtTime = param.setTargetValueAtTime;
   }
 
-  if (window.hasOwnProperty('AudioContext') /*&& !window.hasOwnProperty('webkitAudioContext') */) {
-    window.webkitAudioContext = AudioContext;
+  if (window.hasOwnProperty('webkitAudioContext') &&
+      !window.hasOwnProperty('AudioContext')) {
+    window.AudioContext = webkitAudioContext;
 
-    if (!AudioContext.prototype.hasOwnProperty('internal_createGain')){
-      AudioContext.prototype.internal_createGain = AudioContext.prototype.createGain;
-      AudioContext.prototype.createGain = function() { 
-        var node = this.internal_createGain();
-        fixSetTarget(node.gain);
-        return node;
-      };
-    }
+    if (!AudioContext.prototype.hasOwnProperty('createGain'))
+      AudioContext.prototype.createGain = AudioContext.prototype.createGainNode;
+    if (!AudioContext.prototype.hasOwnProperty('createDelay'))
+      AudioContext.prototype.createDelay = AudioContext.prototype.createDelayNode;
+    if (!AudioContext.prototype.hasOwnProperty('createScriptProcessor'))
+      AudioContext.prototype.createScriptProcessor = AudioContext.prototype.createJavaScriptNode;
+    if (!AudioContext.prototype.hasOwnProperty('createPeriodicWave'))
+      AudioContext.prototype.createPeriodicWave = AudioContext.prototype.createWaveTable;
 
-    if (!AudioContext.prototype.hasOwnProperty('internal_createDelay')){
-      AudioContext.prototype.internal_createDelay = AudioContext.prototype.createDelay;
-      AudioContext.prototype.createDelay = function() { 
-        var node = this.internal_createDelay();
-        fixSetTarget(node.delayTime);
-        return node;
-      };
-    }
 
-    if (!AudioContext.prototype.hasOwnProperty('internal_createBufferSource')){
-      AudioContext.prototype.internal_createBufferSource = AudioContext.prototype.createBufferSource;
-      AudioContext.prototype.createBufferSource = function() { 
-        var node = this.internal_createBufferSource();
-        if (!node.noteOn)
-          node.noteOn = node.start; 
-        if (!node.noteGrainOn)
-          node.noteGrainOn = node.start;
-        if (!node.noteOff)
-          node.noteOff = node.stop;
-        fixSetTarget(node.playbackRate);
-        return node;
-      };
-    }
+    AudioContext.prototype.internal_createGain = AudioContext.prototype.createGain;
+    AudioContext.prototype.createGain = function() {
+      var node = this.internal_createGain();
+      fixSetTarget(node.gain);
+      return node;
+    };
 
-    if (!AudioContext.prototype.hasOwnProperty('internal_createDynamicsCompressor')){
-      AudioContext.prototype.internal_createDynamicsCompressor = AudioContext.prototype.createDynamicsCompressor;
-      AudioContext.prototype.createDynamicsCompressor = function() { 
-        var node = this.internal_createDynamicsCompressor();
-        fixSetTarget(node.threshold);
-        fixSetTarget(node.knee);
-        fixSetTarget(node.ratio);
-        fixSetTarget(node.reduction);
-        fixSetTarget(node.attack);
-        fixSetTarget(node.release);
-        return node;
-      };
-    }
+    AudioContext.prototype.internal_createDelay = AudioContext.prototype.createDelay;
+    AudioContext.prototype.createDelay = function(maxDelayTime) {
+      var node = maxDelayTime ? this.internal_createDelay(maxDelayTime) : this.internal_createDelay();
+      fixSetTarget(node.delayTime);
+      return node;
+    };
 
-    if (!AudioContext.prototype.hasOwnProperty('internal_createBiquadFilter')){
-      AudioContext.prototype.internal_createBiquadFilter = AudioContext.prototype.createBiquadFilter;
-      AudioContext.prototype.createBiquadFilter = function() { 
-        var node = this.internal_createBiquadFilter();
-        fixSetTarget(node.frequency);
-        fixSetTarget(node.detune);
-        fixSetTarget(node.Q);
-        fixSetTarget(node.gain);
-        var enumValues = ['LOWPASS', 'HIGHPASS', 'BANDPASS', 'LOWSHELF', 'HIGHSHELF', 'PEAKING', 'NOTCH', 'ALLPASS'];
-        for (var i = 0; i < enumValues.length; ++i) {
-          var enumValue = enumValues[i];
-          var newEnumValue = enumValue.toLowerCase();
-          if (!node.hasOwnProperty(enumValue)) {
-            node[enumValue] = newEnumValue;
-          }
+    AudioContext.prototype.internal_createBufferSource = AudioContext.prototype.createBufferSource;
+    AudioContext.prototype.createBufferSource = function() {
+      var node = this.internal_createBufferSource();
+      if (!node.start) {
+        node.start = function ( when, offset, duration ) {
+          if ( offset || duration )
+            this.noteGrainOn( when, offset, duration );
+          else
+            this.noteOn( when );
         }
-        return node;
-      };
-    }
+      }
+      if (!node.stop)
+        node.stop = node.noteOff;
+      fixSetTarget(node.playbackRate);
+      return node;
+    };
 
-    if (!AudioContext.prototype.hasOwnProperty('internal_createOscillator') &&
-         AudioContext.prototype.hasOwnProperty('createOscillator')) {
+    AudioContext.prototype.internal_createDynamicsCompressor = AudioContext.prototype.createDynamicsCompressor;
+    AudioContext.prototype.createDynamicsCompressor = function() {
+      var node = this.internal_createDynamicsCompressor();
+      fixSetTarget(node.threshold);
+      fixSetTarget(node.knee);
+      fixSetTarget(node.ratio);
+      fixSetTarget(node.reduction);
+      fixSetTarget(node.attack);
+      fixSetTarget(node.release);
+      return node;
+    };
+
+    AudioContext.prototype.internal_createBiquadFilter = AudioContext.prototype.createBiquadFilter;
+    AudioContext.prototype.createBiquadFilter = function() {
+      var node = this.internal_createBiquadFilter();
+      fixSetTarget(node.frequency);
+      fixSetTarget(node.detune);
+      fixSetTarget(node.Q);
+      fixSetTarget(node.gain);
+      return node;
+    };
+
+    if (AudioContext.prototype.hasOwnProperty( 'createOscillator' )) {
       AudioContext.prototype.internal_createOscillator = AudioContext.prototype.createOscillator;
-      AudioContext.prototype.createOscillator = function() { 
+      AudioContext.prototype.createOscillator = function() {
         var node = this.internal_createOscillator();
-        if (!node.noteOn)
-          node.noteOn = node.start; 
-        if (!node.noteOff)
-          node.noteOff = node.stop;
+        if (!node.start)
+          node.start = node.noteOn;
+        if (!node.stop)
+          node.stop = node.noteOff;
+        if (!node.setPeriodicWave)
+          node.setPeriodicWave = node.setWaveTable;
         fixSetTarget(node.frequency);
         fixSetTarget(node.detune);
-        var enumValues = ['SINE', 'SQUARE', 'SAWTOOTH', 'TRIANGLE', 'CUSTOM'];
-        for (var i = 0; i < enumValues.length; ++i) {
-          var enumValue = enumValues[i];
-          var newEnumValue = enumValue.toLowerCase();
-          if (!node.hasOwnProperty(enumValue)) {
-            node[enumValue] = newEnumValue;
-          }
-        }
-        if (!node.hasOwnProperty('setWaveTable')) {
-          node.setWaveTable = node.setPeriodicTable;
-        }
         return node;
       };
     }
-
-    if (!AudioContext.prototype.hasOwnProperty('internal_createPanner')) {
-      AudioContext.prototype.internal_createPanner = AudioContext.prototype.createPanner;
-      AudioContext.prototype.createPanner = function() {
-        var node = this.internal_createPanner();
-        var enumValues = {
-          'EQUALPOWER': 'equalpower',
-          'HRTF': 'HRTF',
-          'LINEAR_DISTANCE': 'linear',
-          'INVERSE_DISTANCE': 'inverse',
-          'EXPONENTIAL_DISTANCE': 'exponential',
-        };
-        for (var enumValue in enumValues) {
-          var newEnumValue = enumValues[enumValue];
-          if (!node.hasOwnProperty(enumValue)) {
-            node[enumValue] = newEnumValue;
-          }
-        }
-        return node;
-      };
-    }
-
-    if (!AudioContext.prototype.hasOwnProperty('createGainNode'))
-      AudioContext.prototype.createGainNode = AudioContext.prototype.createGain;
-    if (!AudioContext.prototype.hasOwnProperty('createDelayNode'))
-      AudioContext.prototype.createDelayNode = AudioContext.prototype.createDelay;
-    if (!AudioContext.prototype.hasOwnProperty('createJavaScriptNode'))
-      AudioContext.prototype.createJavaScriptNode = AudioContext.prototype.createScriptProcessor;
-    if (!AudioContext.prototype.hasOwnProperty('createWaveTable'))
-      AudioContext.prototype.createWaveTable = AudioContext.prototype.createPeriodicWave;
   }
 }(window));
-
