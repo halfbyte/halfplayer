@@ -1,13 +1,12 @@
 <!doctype html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no" />
   <title>halfplayer</title>
   <script type="text/javascript" src="js/jquery.js"></script>
   <script type="text/javascript" src="js/underscore.js"></script>
-  <script type="text/javascript" src="js/resampler.js"></script>
-  <script type="text/javascript" src="js/swfobject.js"></script>
-  <script type="text/javascript" src="js/XAudioServer.js"></script>
-  <script type="text/javascript" src="js/raf.js"></script>
+  <script type="text/javascript" src="js/vendor/web_audio_monkeypatch.js"></script>
   <script type="text/javascript" src="js/app.js"></script>
   <script type="text/javascript" src="js/mod.js"></script>
   <script type="text/javascript" src="js/player.js"></script>
@@ -42,8 +41,8 @@
     <p>fork me on <a href="https://github.com/halfbyte/halfplayer/">github</a>.</p>
     <h2>credits:</h2>
     <p>player code converted from <a href="http://blog.kebby.org/?p=11">kb's TinyMOD</a> protracker player.</p>
-    <p>uses <a href="https://github.com/grantgalitz/XAudioJS">xaudiojs</a> for crossbrowser playback.</p>
-    <p>by <a href="http://jan.krutisch.de/">halfbyte aka Jan Krutisch</a>.</p>
+    <p>uses <a href="https://github.com/cwilso/webkitAudioContext-MonkeyPatch">@cwilso's Web Audio Monkeypatch</a> for crossbrowser playback.</p>
+    <p>by <a href="http://jan.krutisch.de/">Jan 'half/byte' Krutisch</a>.</p>
 
 
 

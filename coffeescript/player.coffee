@@ -3,7 +3,7 @@ window.MP.player.clamp = (x, min, max) ->
   Math.max(min, Math.min(max, x))
 
 class window.MP.player.MixerVoice
-  constructor: ->
+  constructor: (@sampleRate) ->
     @sample_len = 0
     @loop_len = 0
     @period = 65535
@@ -17,7 +17,7 @@ class window.MP.player.MixerVoice
 
     for i in [0...samples]
 
-      @pos += (3740000.0/ @period) /(48000.0)
+      @pos += (3740000.0/ @period) / (@sampleRate)
 
       int_pos = Math.floor(@pos)
       if int_pos >= @sample_len 
@@ -40,13 +40,11 @@ class window.MP.player.MixerVoice
     @pos = Math.min(offset, @sample_len - 1)
 
 class window.MP.player.Mixer
-
-  PAULARATE: 3740000
-  OUTRATE: 48000
-  constructor: ->
+  PAULARATE: 3740000.0
+  constructor: (@sampleRate)->
     @voices = []
     for i in [0..3]
-      @voices.push(new window.MP.player.MixerVoice())
+      @voices.push(new window.MP.player.MixerVoice(@sampleRate))
     @master_volume = 0.66
     @master_separation = 0.5
 
@@ -108,38 +106,53 @@ class window.MP.player.Player
   constructor: ->
     @module = null
     @channels = []
+    @context = new AudioContext()
+    @OUTRATE = @context.sampleRate
+    
+    
     for i in [0..3]
       @channels.push(new window.MP.player.Channel(this))
 
-    @mixer = new window.MP.player.Mixer()
+    @mixer = new window.MP.player.Mixer(@OUTRATE)
     @calc_ptable()
     @calc_vibtable()
     @bpm = 125
     @reset()
     @cur_pos = 0
     @cur_pattern = 0
+    
+    @separation = 0.7
+    
     @playing = false
 
-    @audioserver = new XAudioServer 2, 48000, 48000 >> 2, 48000 << 1, @xaudio_render, 1
-    window.AS = @audioserver
-    
-    window.requestAnimationFrame(@raf_callback, null);
 
-    # @soundbridge = SoundBridge(2, 48000, '/javascripts/vendor/');
-    # window.setTimeout(
-    #   =>
-    #     @soundbridge.setCallback(@soundbridge_render)
-    #     @soundbridge.play()
-    #   1000
-    # )
+    @splitter = @context.createChannelSplitter(2)
+    @merger = @context.createChannelMerger(2)
+    @gain_rtl = @context.createGain()
+    @gain_rtr = @context.createGain()
+    @gain_ltl = @context.createGain()
+    @gain_ltr = @context.createGain()
+
+    @gain_rtl.gain.value = 1.0 - @separation
+    @gain_ltr.gain.value = 1.0 - @separation
+    @gain_rtr.gain.value = @separation
+    @gain_ltl.gain.value = @separation
+
+    @splitter.connect(@gain_ltl, 0)
+    @splitter.connect(@gain_ltr, 0)
+    @splitter.connect(@gain_rtl, 1)
+    @splitter.connect(@gain_rtr, 1)
+
+    @gain_rtl.connect(@merger, 0, 0)
+    @gain_ltl.connect(@merger, 0, 0)
+    @gain_ltr.connect(@merger, 0, 1)
+    @gain_rtr.connect(@merger, 0, 1)
+
+    @merger.connect(@context.destination)
 
 
-  raf_callback: =>
-    @audioserver.executeCallback()
-    window.requestAnimationFrame(@raf_callback, null);
 
   
-  OUTRATE: 48000
   OUTFPS: 50
 
   channels: []
@@ -156,7 +169,7 @@ class window.MP.player.Player
   load_from_json: (json, callback) =>
     
     finished = ->
-      
+      @reset()
       callback()
 
     @module = new window.MP.models.Mod(json, finished);
@@ -189,6 +202,7 @@ class window.MP.player.Player
 
 
   play: ->
+    @prep_nodes()
     @playing = true
     @pattern_only = false
     @cur_row = 0
@@ -207,26 +221,18 @@ class window.MP.player.Player
       @mixer.voices[ch].volume = 0
       @channels[ch].volume = 0
 
-  xaudio_render: (len) =>
-      
-    buffer = new Float32Array(len * 2)
-    l_buf = new Float32Array(len)
-    r_buf = new Float32Array(len)
-    @render(l_buf, r_buf, len)
-    for i in [0...len]
-      buffer[i*2] = l_buf[i]
-      buffer[i*2 + 1] = r_buf[i]
-    buffer
+  prep_nodes: ->
+    console.log("PREP NODES")
+    if not @render_node?
+      @render_node = @context.createScriptProcessor(2048, 2, 2)
+      @render_node.connect(@splitter)
+      @render_node.onaudioprocess = @js_render
 
-
-
-  soundbridge_render: (bridge, length, channels) =>
-    
-    l_buf = new Float32Array(length);
-    r_buf = new Float32Array(length);
-    @render(l_buf, r_buf, length);
-    for i in [0...length]
-      bridge.addToBuffer(l_buf[i], r_buf[i]);
+  js_render: (e) =>
+    length = e.outputBuffer.getChannelData(0).length
+    l_buf = e.outputBuffer.getChannelData(0)
+    r_buf = e.outputBuffer.getChannelData(1)
+    @render(l_buf, r_buf, length)
 
   calc_ptable: ->
     @PTABLE = []
@@ -255,7 +261,7 @@ class window.MP.player.Player
       @VIB_TABLE[2][ampl] = []
       for x in [0..63]
         @VIB_TABLE[0][ampl].push(Math.floor(scale * Math.sin(x * Math.PI / 32.0) + shift))
-        @VIB_TABLE[1][ampl].push(Math.floor(scale * ((63-x)/31.5-1.0) + shift))
+        @VIB_TABLE[1][ampl].push(Math.floor(scale * ((63-x)/ 31.5-1.0) + shift))
         @VIB_TABLE[2][ampl].push(Math.floor(scale * (if (x<32) then 1 else -1) + shift))
 
   calc_tick_rate: (bpm) ->
@@ -263,6 +269,8 @@ class window.MP.player.Player
     @tick_rate = (125 * @OUTRATE) / (bpm * @OUTFPS)
   
   trig_single_note: (ch, sample, note) ->
+    @prep_nodes()
+    
     channel = @channels[ch]
     voice = @mixer.voices[ch]
     sample = @module.samples[sample]
@@ -484,11 +492,12 @@ class window.MP.player.Player
 
     @cur_pos = 0 if @cur_pos >= @module.pattern_table_length
     
-
-
-
   render: (l_buf, r_buf, len) ->
-    
+    for i in [0...len]
+      l_buf[i] = 0.0
+    for i in [0...len]
+      r_buf[i] = 0.0
+
     offset = 0
     
     while (len > 0)
@@ -501,9 +510,14 @@ class window.MP.player.Player
       else
         @tick() if @playing
         @tr_counter = Math.floor(@tick_rate)
+
+
+
 try
-  window.MP.PlayerInstance = new window.MP.player.Player()  
+  window.MP.PlayerInstance = new window.MP.player.Player()
+  console.log(window.MP.PlayerInstance)
 catch error
+  console.log(error)
   window.MP.PlayerInstance = null
   window.MP.PlayerError = error
 
