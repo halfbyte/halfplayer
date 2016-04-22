@@ -28,7 +28,7 @@ $ ->
     $('.button.play').removeClass('active')
     me.addClass('active')
     MP.PlayerInstance.stop()
-    
+
 
   $('.play').click (e) ->
     e.preventDefault()
@@ -37,7 +37,7 @@ $ ->
     MP.PlayerInstance.play()
     me.addClass('active')
     $('.button.stop').removeClass('active')
-    
+
 
   $('.mod').click (e) ->
     url = @href
@@ -47,7 +47,7 @@ $ ->
     oReq = new XMLHttpRequest()
     oReq.open "GET", url, true
     oReq.responseType = "arraybuffer"
-  
+
     oReq.onload = (oEvent) ->
       arrayBuffer = oReq.response
       if arrayBuffer
@@ -58,11 +58,36 @@ $ ->
         $('.button.stop,.button.play').removeClass('inactive')
         $('.button.play').addClass('active')
 
-    oReq.send(null);  
+    oReq.send(null);
 
     e.preventDefault()
 
 
+  $('.playlist').on 'dragenter', (e) ->
+    $(this).addClass('dropTarget');
+
+  $('.playlist').on 'dragleave', (e) ->
+    $(this).removeClass('dropTarget');
+
+  $('.playlist').on 'dragover', (e) ->
+    e.preventDefault()
+  $('.playlist').on 'drop', (e) ->
+    $(this).removeClass('dropTarget');
+    e.preventDefault()
+    console.log(e.originalEvent.dataTransfer);
+    file = e.originalEvent.dataTransfer.files.item(0)
+    fr = new FileReader()
+    fr.onload = (e) ->
+      mod = new MP.Mod(e.target.result);
+      set_sample_names(mod);
+      MP.PlayerInstance.set_module(mod)
+      MP.PlayerInstance.play()
+      $('.button.stop,.button.play').removeClass('inactive')
+      $('.button.play').addClass('active')
+    fr.readAsArrayBuffer(file)
+
+
+
+
+
   # give the app a single instance only
-
-
